@@ -104,7 +104,7 @@ def pay_for_basket(request: HttpRequest, currency: str):
     basket.save()
     items_filter.delete()
 
-    success_url = f"http://{request.META['HTTP_HOST']}/{order.id}".strip()
+    success_url = f"http://{request.META['HTTP_HOST']}/success/{order.id}".strip()
     cancel_url = request.META["HTTP_REFERER"]
 
     stripe_checkout_session = get_stripe_checkout_session(items,
