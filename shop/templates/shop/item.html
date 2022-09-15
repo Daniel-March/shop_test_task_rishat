@@ -1,0 +1,108 @@
+{% extends 'shop/index.html' %}
+
+{% load static %}
+{% block content %}
+    {% csrf_token %}
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Shop</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+                    aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="{% url 'main' %}">Товары</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="d-flex">
+                <a class="btn btn-outline-primary" href="{% url 'basket' %}">Корзина</a>
+                <a class="btn btn-outline-primary" href="{% url 'orders' %}">Заказы</a>
+            </div>
+        </div>
+    </nav>
+    <main class="mt-5">
+        <div class="container my-5">
+            <div class="row p-4 pb-0 pe-lg-0 pt-lg-5 align-items-center rounded-3 border shadow-lg">
+                <div class="col-lg-7 p-3 p-lg-5 pt-lg-3">
+                    <h1 class="display-4 fw-bold lh-1 fs-1 item_name">{{ item.name }}</h1>
+                    <p class="lead">{{ item.description }}</p>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4 mb-lg-3">
+                        <span class="text-muted fs-5">{{ item.price }} {{ item.currency.name }}</span>
+                        <a class="btn btn-outline-primary" href="{% url 'pay_for_item' id=item.id %}">Купить</a>
+                        <button class="btn btn-outline-primary" onclick="remove_from_basket()"
+                                {% if not in_basket %}hidden{% endif %} id="remove_from_basket">Удалить из корзины
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="add_to_basket()"
+                                {% if in_basket %}hidden{% endif %} id="add_to_basket">Добавить в корзину
+                        </button>
+                    </div>
+                </div>
+                <div class="col-lg-4 offset-lg-1 p-0 overflow-hidden shadow-lg">
+                    <img class="rounded" src="{% static 'png/default_product_image.png' %}" alt="" width="480">
+                </div>
+            </div>
+        </div>
+    </main>
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto text-dark">{{ item.name }}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">Добавлен в корзину</div>
+        </div>
+        <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto text-dark">{{ item.name }}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">Удален из корзины</div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        let toastElList = [].slice.call(document.querySelectorAll('.toast'))
+        let toastList = toastElList.map(function (toastEl) {
+            return new bootstrap.Toast(toastEl);
+        })
+        let add_toast = toastList[0];
+        let remove_toast = toastList[1];
+
+        function add_to_basket() {
+            fetch("{% url 'add_item_to_basket' id=item.id%}", {
+                method: "GET",
+                headers: {
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json'
+                }
+            }).then((response) => {
+                if (response.status === 200) {
+                    add_toast.show()
+                    document.getElementById("remove_from_basket").hidden = false;
+                    document.getElementById("add_to_basket").hidden = true;
+                }
+            })
+        }
+
+        function remove_from_basket() {
+            fetch("{% url 'remove_item_from_basket' id=item.id%}", {
+                method: "GET",
+                headers: {
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json'
+                }
+            }).then((response) => {
+                if (response.status === 200) {
+                    remove_toast.show();
+                    document.getElementById("remove_from_basket").hidden = true;
+                    document.getElementById("add_to_basket").hidden = false;
+                }
+            })
+        }
+    </script>
+{% endblock %}
